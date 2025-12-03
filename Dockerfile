@@ -5,8 +5,9 @@ ENV CATALINA_HOME /usr/local/tomcat
 # Copy the webapp into Tomcat's ROOT so the JSPs are served at /
 COPY WebContent/ ${CATALINA_HOME}/webapps/ROOT/
 
-# Copy JDBC driver into Tomcat lib
+# Copy JDBC drivers into Tomcat lib
 COPY WebContent/WEB-INF/lib/mssql-jdbc-11.2.0.jre11.jar ${CATALINA_HOME}/lib/mssql-jdbc-11.2.0.jre11.jar
+COPY WebContent/WEB-INF/lib/ ${CATALINA_HOME}/lib/
 
 # Copy a small entrypoint that rewrites the Connector port to $PORT (Railway provides PORT)
 COPY docker/start-tomcat.sh /usr/local/bin/start-tomcat.sh
