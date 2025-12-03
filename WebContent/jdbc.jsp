@@ -41,7 +41,7 @@ Public methods:
 		try
 		{	// Load appropriate driver based on URL
 			if (url.contains("mysql")) {
-				Class.forName("com.mysql.jdbc.Driver");
+				Class.forName("com.mysql.cj.jdbc.Driver");
 			} else if (url.contains("sqlserver")) {
 				Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
 			}
