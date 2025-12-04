@@ -21,7 +21,7 @@ services:
                 aliases:
                     - cosc304_mysql
     cosc304-sqlserver:
-        image: mcr.microsoft.com/mssql/server:2019-latest
+        image: mcr.microsoft.com/azure-sql-edge
         container_name: cosc304-sqlserver
         restart: always
         environment:
@@ -67,8 +67,6 @@ services:
         depends_on:
             - cosc304-sqlserver
         container_name: cosc304-java
-        environment:
-            MYSQL_URL: ${{ MySQL.MYSQL_URL }}
         volumes:
             - ./WebContent:/usr/local/tomcat/webapps/shop/
         networks:

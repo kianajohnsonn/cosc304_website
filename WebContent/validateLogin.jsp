@@ -4,17 +4,26 @@
 	String authenticatedUser = null;
 	session = request.getSession(true);
 
-	try
+String returnUrl = request.getParameter("returnUrl");
+
+try
 	{
 		authenticatedUser = validateLogin(out,request,session);
 	}
 	catch(IOException e)
 	{	System.err.println(e); }
 
-	if(authenticatedUser != null)
-		response.sendRedirect("index.jsp");		// Successful login
-	else 
-		response.sendRedirect("login.jsp");		// Failed login - redirect back to login page with a message 
+  if(authenticatedUser != null) {
+        if (returnUrl != null && !returnUrl.trim().equals("")) {
+            response.sendRedirect(returnUrl);   // go back to original page (e.g., customer.jsp)
+        } else {
+            response.sendRedirect("index.jsp"); // default: home page
+        }
+    }
+    else {
+        response.sendRedirect("login.jsp");     // login failed
+    }
+
 %>
 
 

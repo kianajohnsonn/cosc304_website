@@ -22,17 +22,6 @@
     letter-spacing: 0.5px;
   }
 
-  a {
-    text-decoration: none;
-    color: #0c6fb8; 
-    background: #e2f1f7;
-    padding: 12px 24px;
-    border-radius: 50px;    
-    font-size: 1.1rem;
-    transition: 0.25s ease;
-    border: 1px solid #0c6fb8;
-  }
-
   a:hover {
     background: #0c6fb8;
     color: white;
@@ -82,45 +71,9 @@
     background: #084a7d;
   }
 
-  /* Product table */
-  .product-table {
-    width: 80%;
-    margin: 20px auto 50px;
-    border-collapse: collapse;
-    background: #738db4;        
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
-    border-radius: 12px;
-    overflow: hidden;           
-  }
-
-  .product-table th,
-  .product-table td {
-    padding: 12px 16px;
-    text-align: left;
-  }
-
-  .product-table th {
-    background: #1f3d2b;        
-    color: #e1f1ff;            
-    font-weight: normal;
-    font-size: 1rem;
-  }
-
-  .product-table tr:nth-child(even) {
-    background: #FFF7F9;        
-  }
-
-  .product-table tr:nth-child(odd) {
-    background: #FFF7F9;
-  }
-
-  .product-table tr:hover {
-    background: #E2F1F7;        
-  }
-
   .add-to-cart-btn {
     display: inline-block;
-    padding: 6px 14px;
+    padding: 5px 10px;
     font-size: 0.9rem;
     border-radius: 50px;
     background: #e2f1f7;
@@ -128,12 +81,78 @@
     border: 1px solid #0c6fb8;
     text-decoration: none;
     transition: 0.2s ease;
+    margin-left: 75px;
   }
 
   .add-to-cart-btn:hover {
     background: #0c6fb8;
     color: #ffffff;
   }
+  .product-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+    padding: 20px;
+}
+.product-card-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+
+.product-card-link:hover .product-card {
+    transform: translateY(-4px);
+    background: #f1f9ff;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+}
+
+
+.product-card {
+    width: 220px;
+    background: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    padding: 10px 10px 15px 10px;
+    text-align: center;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.product-image {
+    width: 100%;
+    height: 160px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-bottom: 8px;
+}
+
+.product-name a {
+    background: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    display: inline-block;
+    font-size: 1rem !important;
+    line-height: 1.2;
+    color: #1f3d2b !important;
+    text-decoration: none;
+    white-space: normal; /* allows wrapping */
+}
+
+.product-name a:hover {
+    text-decoration: underline;
+    color: #0c6fb8 !important;
+}
+
+
+.product-price {
+    font-size: 1.05rem;
+    font-weight: bold;
+    margin: 8px 0;
+    margin-top: 15px;
+}
+
 </style>
 
 </head>
@@ -184,7 +203,11 @@
 String productNameParam = request.getParameter("productName");
 if (productNameParam == null) productNameParam = "";
 
+
 String categoryIdParam = request.getParameter("categoryId");
+
+// IMPORTANT: get context path
+String context = request.getContextPath();
 
 NumberFormat currFormat = NumberFormat.getCurrencyInstance();
 
@@ -209,40 +232,86 @@ try {
 
         ResultSet rs = pstmt.executeQuery();
 
-        out.println("<table class='product-table'>");
-        out.println("<tr><th>Product ID</th><th>Name</th><th>Category</th><th>Price</th><th>Action</th></tr>");
+        out.println("<div class='product-grid'>");
 
-        String currentCategory = "";
         while (rs.next()) {
             int id = rs.getInt("productId");
             String name = rs.getString("productName");
             double price = rs.getDouble("productPrice");
             String category = rs.getString("categoryName");
+            String imageURL;
+
             if (category == null) {
                 category = "Uncategorized";
             }
 
-            if (!category.equals(currentCategory)) {
-                currentCategory = category;
-                out.println("<tr><td colspan='5' class='category-header'>" + currentCategory + "</td></tr>");
+            // Assign images based on category and product name
+            if ("Coffee Beans Whole".equalsIgnoreCase(category)) {
+                imageURL = context + "/img/wholebeans.jpg";
+            } else if ("Coffee Beans Ground".equalsIgnoreCase(category)) {
+                imageURL = context + "/img/groundcoffee.jpg";
+            } else if ("Coffee Makers".equalsIgnoreCase(category)) {
+                // Assign unique images for each coffee maker based on product name
+                if (name.toLowerCase().contains("single")) {
+                    imageURL = context + "/img/singleshot.jpeg";
+                } else if (name.toLowerCase().contains("dual")) {
+                    imageURL = context + "/img/doubleshot.jpeg";
+                } else if (name.toLowerCase().contains("french")) {
+                    imageURL = context + "/img/frenchpress.jpeg";
+                } else if (name.toLowerCase().contains("drip")) {
+                    imageURL = context + "/img/drip.jpeg";
+                } else if (name.toLowerCase().contains("mokapot") || name.toLowerCase().contains("moka")) {
+                    imageURL = context + "/img/mokapot.jpeg";
+                } else {
+                    imageURL = context + "/img/mokapot.jpeg"; // default coffee maker image
+                }
+            } else if ("Accessories".equalsIgnoreCase(category)) {
+                // Assign unique images for each accessory
+                if (name.toLowerCase().contains("frother")) {
+                    imageURL = context + "/img/frother.png";
+                } else if (name.toLowerCase().contains("scale")) {
+                    imageURL = context + "/img/scale.png";
+                } else if (name.toLowerCase().contains("filter")) {
+                    imageURL = context + "/img/filters.jpeg";
+                } else if (name.toLowerCase().contains("travel") || name.toLowerCase().contains("mug")) {
+                    imageURL = context + "/img/travelmug.png";
+                } else {
+                    imageURL = context + "/img/frother.png"; // default accessory image
+                }
+            } else {
+                // Default for unknown categories
+                imageURL = context + "/img/wholebeans.jpg";
             }
+
 
             // Build Add to Cart URL safely
             String addUrl = "addcart.jsp?id=" + id
                           + "&name=" + URLEncoder.encode(name, "UTF-8")
                           + "&price=" + price;
 
-            out.println("<tr>");
-            out.println("<td>" + id + "</td>");
-            // Click name to go to product.jsp
-            out.println("<td><a href='product.jsp?id=" + id + "'>" + name + "</a></td>");
-            out.println("<td>" + category + "</td>");
-            out.println("<td>" + currFormat.format(price) + "</td>");
-            out.println("<td><a href='" + addUrl + "' class='add-to-cart-btn'>Add to Cart</a></td>");
-            out.println("</tr>");
+            String productLink = "product.jsp?id=" + id;
+
+out.println("<div class='product-wrapper'>");  // optional wrapper
+
+// whole card is clickable
+out.println("<a href='" + productLink + "' class='product-card-link'>");
+out.println("<div class='product-card'>");
+
+out.println("<img src='" + imageURL + "' class='product-image'>");
+out.println("<div class='product-name'>" + name + "</div>");
+out.println("<div class='product-price'>" + currFormat.format(price) + "</div>");
+
+out.println("</div>");
+out.println("</a>");
+
+// Separate Add to Cart button
+out.println("<a href='" + addUrl + "' class='add-to-cart-btn'>Add to Cart</a>");
+
+out.println("</div>");
+
         }
 
-        out.println("</table>");
+        out.println("</div>"); // end grid
 
         rs.close();
         pstmt.close();
@@ -250,7 +319,7 @@ try {
 
 } catch (Exception e) {
     out.println("<p style='color:red;'>Error: " + e.getMessage() + "</p>");
-}
+} 
 %>
 
 </body>

@@ -13,37 +13,18 @@
 out.print("<h1>Connecting to database.</h1><br><br>");
 
 try
-{	// Load appropriate driver based on URL
-	if (url.contains("mysql")) {
-		Class.forName("com.mysql.cj.jdbc.Driver");
-	} else if (url.contains("sqlserver")) {
-		Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
-	}
+{	// Load driver class
+    Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
 }
 catch (java.lang.ClassNotFoundException e)
 {
     throw new SQLException("ClassNotFoundException: " +e);
 }
 
-// Determine which DDL file to use
-String fileName;
-if (url.contains("mysql")) {
-	fileName = "/usr/local/tomcat/webapps/shop/ddl/MySQL_orderdb.ddl";
-} else {
-	fileName = "/usr/local/tomcat/webapps/shop/ddl/SQLServer_orderdb.ddl";
-}
+String fileName = "/usr/local/tomcat/webapps/shop/ddl/SQLServer_orderdb.ddl";
 
-Connection con = null;
-try
-{	
-	// Use flexible connection logic
-	if (uid != null && !uid.isEmpty() && pw != null && !pw.isEmpty()) {
-		con = DriverManager.getConnection(url, uid, pw);
-	} else {
-		// Railway MYSQL_URL already includes credentials
-		con = DriverManager.getConnection(url);
-	}
-	
+try ( Connection con = DriverManager.getConnection(urlForLoadData, uid, pw); )
+{      
     // Create statement
     Statement stmt = con.createStatement();
     
@@ -59,8 +40,8 @@ try
         if (command.trim().indexOf("go") == 0)
             command = command.substring(3, command.length());
 
-        // Hack to make sure variable is declared (SQL Server specific)
-        if (url.contains("sqlserver") && command.contains("INSERT INTO ordersummary") && !command.contains("DECLARE @orderId"))
+        // Hack to make sure variable is declared
+        if (command.contains("INSERT INTO ordersummary") && !command.contains("DECLARE @orderId"))
             command = "DECLARE @orderId int \n"+command;
 
         out.print(command+"<br>");        // Uncomment if want to see commands executed
@@ -81,11 +62,6 @@ try
 catch (Exception e)
 {
     out.print(e);
-}
-finally {
-	if (con != null) {
-		try { con.close(); } catch (Exception e) { }
-	}
 }  
 %>
 </body>

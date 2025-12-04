@@ -1,0 +1,24 @@
+
+# macOS
+.DS_Store
+
+# build output
+target/
+bin/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Java / JSP compiled
+*.class
+*.war
+*.jar
+
+# logs
+*.log
+
+# OS temp
+*.swp
+

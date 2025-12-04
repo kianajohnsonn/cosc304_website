@@ -1,3 +1,19 @@
+<%@ include file="header.jsp" %>
+
+<%
+String authenticatedUser = (String) session.getAttribute("authenticatedUser");
+if (authenticatedUser != null) {
+    // User is already logged in → send them where they were trying to go
+    String returnUrl = request.getParameter("returnUrl");
+    if (returnUrl == null || returnUrl.trim().isEmpty()) {
+        returnUrl = "index.jsp";   // default if no returnUrl
+    }
+    response.sendRedirect(returnUrl);
+    return; // stop rendering the rest of login.jsp
+}
+%>
+
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -89,20 +105,24 @@ if (session.getAttribute("loginMessage") != null)
 %>
 
 <br>
-<form name="MyForm" method=post action="validateLogin.jsp">
-<table style="display:inline">
-<tr>
-	<td><div align="right"><font face="Arial, Helvetica, sans-serif" size="2">Username:</font></div></td>
-	<td><input type="text" name="userid"  size=10 maxlength=10></td>
-</tr>
-<tr>
-	<td><div align="right"><font face="Arial, Helvetica, sans-serif" size="2">Password:</font></div></td>
-	<td><input type="password" name="password" size=10 maxlength="10"></td>
-</tr>
-</table>
-<br/>
-<input class="submit" type="submit" name="Submit2" value="Log In">
+<form name="MyForm" method="post" action="validateLogin.jsp">
+    <input type="hidden" name="returnUrl"
+           value="<%= request.getParameter("returnUrl") == null ? "" : request.getParameter("returnUrl") %>">
+
+    <table style="display:inline">
+        <tr>
+            <td><div align="right"><font face="Arial, Helvetica, sans-serif" size="2">Username:</font></div></td>
+            <td><input type="text" name="userid"  size="10" maxlength="10"></td>
+        </tr>
+        <tr>
+            <td><div align="right"><font face="Arial, Helvetica, sans-serif" size="2">Password:</font></div></td>
+            <td><input type="password" name="password" size="10" maxlength="10"></td>
+        </tr>
+    </table>
+    <br/>
+    <input class="submit" type="submit" name="Submit2" value="Log In">
 </form>
+
 
 </div>
 

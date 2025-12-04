@@ -6,6 +6,8 @@
 <%@ page import="java.util.Map" %>
 <%@ page import="java.util.Date" %>
 <%@ include file="jdbc.jsp" %>
+<%@ include file="header.jsp" %>
+
 
 <html>
 <head>

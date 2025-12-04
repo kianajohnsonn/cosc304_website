@@ -5,6 +5,10 @@
 <%@ page import="java.util.ArrayList" %>
 <%@ page import="java.util.Map" %>
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF8"%>
+<%@ include file="jdbc.jsp" %>
+
+
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -140,108 +144,109 @@ if (custIdStr == null || custIdStr.trim().isEmpty()) {
     }
 
     if (custId != -1) {
-        String url = "jdbc:sqlserver://cosc304_sqlserver:1433;DatabaseName=orders;TrustServerCertificate=True";
-        String uid = "sa";
-        String pw = "304#sa#pw";
+      // Establish connection (jdbc.jsp's getConnection sets the `con` field)
+      getConnection();
+      try {
 
-        try {
-            Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
-            try (Connection con = DriverManager.getConnection(url, uid, pw)) {
+        // Validate customer exists AND password
+        PreparedStatement custStmt = con.prepareStatement("SELECT * FROM customer WHERE customerId = ? AND password = ?");
+        custStmt.setInt(1, custId);
+        custStmt.setString(2, password);
+        ResultSet crs = custStmt.executeQuery();
 
-                // Validate customer exists AND password
-                PreparedStatement custStmt = con.prepareStatement("SELECT * FROM customer WHERE customerId = ? AND password = ?");
-                custStmt.setInt(1, custId);
-                custStmt.setString(2, password);
-                ResultSet crs = custStmt.executeQuery();
+        if (!crs.next()) {
+          out.println("<div class='error-message'><h3>Error: Invalid Customer ID or Password!</h3></div>");
+        } else {
+          // Insert into ordersummary (use DB-native current-timestamp function)
+          String insertOrderSql;
+          if (url != null && url.toLowerCase().contains("mysql")) {
+            insertOrderSql = "INSERT INTO ordersummary (customerId, totalAmount, orderDate) VALUES (?, 0, NOW())";
+          } else {
+            insertOrderSql = "INSERT INTO ordersummary (customerId, totalAmount, orderDate) VALUES (?, 0, GETDATE())";
+          }
 
-                if (!crs.next()) {
-                    out.println("<div class='error-message'><h3>Error: Invalid Customer ID or Password!</h3></div>");
-                } else {
-                    // Insert into ordersummary
-                    PreparedStatement orderStmt = con.prepareStatement(
-                        "INSERT INTO ordersummary (customerId, totalAmount, orderDate) VALUES (?, 0, GETDATE())",
-                        Statement.RETURN_GENERATED_KEYS
-                    );
-                    orderStmt.setInt(1, custId);
-                    orderStmt.executeUpdate();
+          PreparedStatement orderStmt = con.prepareStatement(insertOrderSql, Statement.RETURN_GENERATED_KEYS);
+          orderStmt.setInt(1, custId);
+          orderStmt.executeUpdate();
 
-                    ResultSet keys = orderStmt.getGeneratedKeys();
-                    keys.next();
-                    int orderId = keys.getInt(1);
+          ResultSet keys = orderStmt.getGeneratedKeys();
+          keys.next();
+          int orderId = keys.getInt(1);
 
-                    double totalAmount = 0;
+          double totalAmount = 0;
 
-                    // Insert each item into orderproduct
-                    for (Map.Entry<String, ArrayList<Object>> entry : cart.entrySet()) {
-                        ArrayList<Object> prod = entry.getValue();
-                        int prodId = (Integer) prod.get(0);
-                        double productPrice = (Double) prod.get(2);
-                        int qty = (Integer) prod.get(3);
+          // Insert each item into orderproduct
+          for (Map.Entry<String, ArrayList<Object>> entry : cart.entrySet()) {
+            ArrayList<Object> prod = entry.getValue();
+            int prodId = (Integer) prod.get(0);
+            double productPrice = (Double) prod.get(2);
+            int qty = (Integer) prod.get(3);
 
-                        PreparedStatement opStmt = con.prepareStatement(
-                            "INSERT INTO orderproduct (orderId, productId, quantity, price) VALUES (?, ?, ?, ?)"
-                        );
-                        opStmt.setInt(1, orderId);
-                        opStmt.setInt(2, prodId);
-                        opStmt.setInt(3, qty);
-                        opStmt.setDouble(4, productPrice);
-                        opStmt.executeUpdate();
-                        opStmt.close();
+            PreparedStatement opStmt = con.prepareStatement(
+              "INSERT INTO orderproduct (orderId, productId, quantity, price) VALUES (?, ?, ?, ?)"
+            );
+            opStmt.setInt(1, orderId);
+            opStmt.setInt(2, prodId);
+            opStmt.setInt(3, qty);
+            opStmt.setDouble(4, productPrice);
+            opStmt.executeUpdate();
+            opStmt.close();
 
-                        totalAmount += productPrice * qty;
-                    }
+            totalAmount += productPrice * qty;
+          }
 
-                    // Update totalAmount in ordersummary
-                    PreparedStatement updateStmt = con.prepareStatement(
-                        "UPDATE ordersummary SET totalAmount = ? WHERE orderId = ?"
-                    );
-                    updateStmt.setDouble(1, totalAmount);
-                    updateStmt.setInt(2, orderId);
-                    updateStmt.executeUpdate();
-                    updateStmt.close();
+          // Update totalAmount in ordersummary
+          PreparedStatement updateStmt = con.prepareStatement(
+            "UPDATE ordersummary SET totalAmount = ? WHERE orderId = ?"
+          );
+          updateStmt.setDouble(1, totalAmount);
+          updateStmt.setInt(2, orderId);
+          updateStmt.executeUpdate();
+          updateStmt.close();
 
-                    // Display order summary
-                    out.println("<div class='success-message'>");
-                    out.println("<h2>Order #" + orderId + " for Customer " + custId + "</h2>");
-                    out.println("</div>");
-                    
-                    out.println("<table class='order-table'><tr><th>Product ID</th><th>Name</th><th>Quantity</th><th>Price</th></tr>");
-                    for (Map.Entry<String, ArrayList<Object>> entry : cart.entrySet()) {
-                        ArrayList<Object> prod = entry.getValue();
-                        int prodId = (Integer) prod.get(0);
-                        String name = (String) prod.get(1);
-                        double productPrice = (Double) prod.get(2);
-                        int qty = (Integer) prod.get(3);
+          // Display order summary
+          out.println("<div class='success-message'>");
+          out.println("<h2>Order #" + orderId + " for Customer " + custId + "</h2>");
+          out.println("</div>");
+          
+          out.println("<table class='order-table'><tr><th>Product ID</th><th>Name</th><th>Quantity</th><th>Price</th></tr>");
+          for (Map.Entry<String, ArrayList<Object>> entry : cart.entrySet()) {
+            ArrayList<Object> prod = entry.getValue();
+            int prodId = (Integer) prod.get(0);
+            String name = (String) prod.get(1);
+            double productPrice = (Double) prod.get(2);
+            int qty = (Integer) prod.get(3);
 
-                        out.println("<tr>");
-                        out.println("<td>" + prodId + "</td>");
-                        out.println("<td>" + name + "</td>");
-                        out.println("<td>" + qty + "</td>");
-                        out.println("<td>" + currFormat.format(productPrice * qty) + "</td>");
-                        out.println("</tr>");
-                    }
-                    out.println("</table>");
-                    out.println("<h3>Total: " + currFormat.format(totalAmount) + "</h3>");
-					out.println("<div class='total-wrap'><h3>Total: " + currFormat.format(totalAmount) + "</h3></div>");
-					out.println("<div class='actions'>"
-							+ "<a href='listprod.jsp' class='btn'>Continue Shopping</a>"
-							+ "<a href='shop.html' class='btn btn-secondary'>Back to Home</a>"
-							+ "</div>");
+            out.println("<tr>");
+            out.println("<td>" + prodId + "</td>");
+            out.println("<td>" + name + "</td>");
+            out.println("<td>" + qty + "</td>");
+            out.println("<td>" + currFormat.format(productPrice * qty) + "</td>");
+            out.println("</tr>");
+          }
+          out.println("</table>");
+          out.println("<h3>Total: " + currFormat.format(totalAmount) + "</h3>");
+          out.println("<div class='total-wrap'><h3>Total: " + currFormat.format(totalAmount) + "</h3></div>");
+          out.println("<div class='actions'>"
+              + "<a href='listprod.jsp' class='btn'>Continue Shopping</a>"
+              + "<a href='shop.html' class='btn btn-secondary'>Back to Home</a>"
+              + "</div>");
 
-
-                    // Clear cart
-                    session.removeAttribute("productList");
-                    
-                    // Close orderStmt inside the else block where it's defined
-                    orderStmt.close();
-                }
-
-                crs.close();
-                custStmt.close();
-            }
-        } catch (Exception e) {
-            out.println("<div class='error-message'><p>Error: " + e.getMessage() + "</p></div>");
+          // Clear cart
+          session.removeAttribute("productList");
+          
+          // Close orderStmt inside the else block where it's defined
+          orderStmt.close();
         }
+
+        crs.close();
+        custStmt.close();
+      } catch (Exception e) {
+        out.println("<div class='error-message'><p>Error: " + e.getMessage() + "</p></div>");
+      } finally {
+        // Ensure the shared connection is closed via helper
+        try { closeConnection(); } catch (Exception ignore) {}
+      }
     }
 }
 %>

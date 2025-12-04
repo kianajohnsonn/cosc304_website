@@ -4,6 +4,7 @@
 <%@ page import="java.text.NumberFormat" %>
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ include file="jdbc.jsp" %>
+
 <html>
 <head>
 <title>Product Information</title>
@@ -25,8 +26,7 @@ letter-spacing: 1px;
 }
 /* Product container */
 .product-box {
-width: 70%;
-max-width: 700px;
+width: 90%;
 background: #FFF7F9; /* soft pink card */
 margin: 30px auto;
 padding: 25px 35px;
@@ -48,7 +48,7 @@ line-height: 1.5;
 .product-box img {
 display: block;
 margin: 20px auto;
-max-width: 300px;
+max-width: 500px;
 border-radius: 8px;
 box-shadow: 0 1px 4px rgba(0,0,0,0.15);
 }
@@ -210,7 +210,7 @@ out.println("<strong>Total: </strong><span id='totalPrice'>" + currFormat.format
 
 out.println("</div>");
 if (imageURL != null && !imageURL.isEmpty()) {
-  out.println("<img src='" + imageURL + "'alt='" + name + "' style='max-width:300px;'/>");
+  out.println("<img src='" + imageURL + "'alt='" + name + "' style='max-width:600px;'/>");
 
 } else {
 out.println("<p>No image available.</p>");

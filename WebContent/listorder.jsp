@@ -2,6 +2,7 @@
 <%@ page import="java.text.NumberFormat" %>
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF8"%>
 <%@ page import="java.math.BigDecimal" %>
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -28,15 +29,15 @@
         width: 90%;
         margin: 25px auto;
         border-collapse: collapse;
-        background: #ffffff;
+        background: #e6d8de;
         border-radius: 12px;
         overflow: hidden;
         box-shadow: 0 4px 10px rgba(0,0,0,0.08);
     }
 
     table th {
-        background: #1f3d2b;   /* dark green */
-        color: #e6f3fa;        /* light blue text */
+        background: #9eb7d3;   /* dark green */
+        color: #244f7e;        /* light blue text */
         padding: 12px;
         font-size: 1rem;
         text-align: left;
@@ -57,7 +58,7 @@
     }
 
     table table th {
-        background: #fde4ec;    /* soft pink */
+        background: #a8b9a1;    /* soft pink */
         color: #1f3d2b;
         border-bottom: 1px solid #f6cce0;
     }
@@ -78,6 +79,8 @@
 
 </head>
 <body>
+
+<%@ include file="header.jsp" %>
 
 <h1>Order List</h1>
 
