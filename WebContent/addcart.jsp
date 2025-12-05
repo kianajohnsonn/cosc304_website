@@ -1,68 +1,126 @@
 <%@ page import="java.util.HashMap" %>
 <%@ page import="java.util.ArrayList" %>
-<%@ page import="java.sql.*" %>
 <%@ page import="java.text.NumberFormat" %>
-<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page import="java.util.Locale" %>
+<%@ page import="java.sql.*" %>
+<%@ page import="java.util.*" %>
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF8"%>
 
 <%
-// Fetch product ID from request
-String idStr = request.getParameter("id");
+// Get product details from request
+String id = request.getParameter("id");
 String name = request.getParameter("name");
-String priceStr = request.getParameter("price");
-String quantityStr = request.getParameter("quantity");
-if (idStr == null || name == null || priceStr == null) {
-out.println("<h3>Error: Invalid product data!</h3>");
-return;
-}
-int id = Integer.parseInt(idStr);
-double price = 0.0;
-int quantity = 1; // Default quantity
-try {
-price = Double.parseDouble(priceStr);
-} catch (NumberFormatException e) {
+String price = request.getParameter("price");
+String qty = request.getParameter("quantity");
 
-out.println("<h3>Error: Invalid price for product!</h3>");
-return;
-}
-// Get quantity from parameter if provided
-if (quantityStr != null && !quantityStr.trim().isEmpty()) {
+// Default quantity to 1 if not specified
+if (qty == null)
+	qty = "1";
 
-try {
-quantity = Integer.parseInt(quantityStr);
-if (quantity < 1) quantity = 1;
-} catch (NumberFormatException e) {
-// Use default quantity if invalid
-quantity = 1;
-}
-}
-// Get existing cart or create new
-@SuppressWarnings("unchecked")
-HashMap<String, ArrayList<Object>> productList =
-(HashMap<String, ArrayList<Object>>)
+// Add item to shopping cart
+@SuppressWarnings({"unchecked"})
+HashMap<String, ArrayList<Object>> productList = (HashMap<String, ArrayList<Object>>) session.getAttribute("productList");
 
-session.getAttribute("productList");
-if (productList == null) {
-productList = new HashMap<>();
+if (productList == null)
+{	// No cart, create one
+	productList = new HashMap<String, ArrayList<Object>>();
 }
-// Add or update product
-if (productList.containsKey(idStr)) {
-// Update quantity - add the new quantity to existing quantity
 
-ArrayList<Object> prod = productList.get(idStr);
-int curQty = (Integer) prod.get(3);
-prod.set(3, curQty + quantity);
-} else {
-// Add new product with specified quantity
-ArrayList<Object> prod = new ArrayList<>();
-prod.add(id); // product ID
-prod.add(name); // product name
-prod.add(price); // product price
-prod.add(quantity); // quantity from selector
-productList.put(idStr, prod);
-
+// Check if product already exists in cart
+ArrayList<Object> product = productList.get(id);
+if (product != null)
+{	// Product exists, update quantity
+	product.set(3, ((Integer)product.get(3)) + Integer.parseInt(qty));
 }
-// Save cart back to session
+else
+{	// New product, add to cart
+	product = new ArrayList<Object>();
+	product.add(id); // id
+	product.add(name); // name
+	double pr = Double.parseDouble(price);
+	product.add(pr); // price
+	product.add(Integer.parseInt(qty)); // quantity
+	productList.put(id,product);
+}
+
 session.setAttribute("productList", productList);
+
+// Save cart to database if user is logged in
+String userName = (String) session.getAttribute("authenticatedUser");
+if (userName != null) {
+    try {
+        // Create local database connection
+        String url = "jdbc:sqlserver://cosc304_sqlserver:1433;DatabaseName=orders;TrustServerCertificate=True";
+        String uid = "sa";
+        String pw = "304#sa#pw";
+        
+        Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
+        Connection con = DriverManager.getConnection(url, uid, pw);
+        
+        // Get customer ID
+        String userSql = "SELECT customerId FROM customer WHERE userid = ?";
+        PreparedStatement userStmt = con.prepareStatement(userSql);
+        userStmt.setString(1, userName);
+        ResultSet userRs = userStmt.executeQuery();
+        
+        if (userRs.next()) {
+            int customerId = userRs.getInt("customerId");
+            
+            // Save cart to database
+            saveCartToDatabase(con, customerId, productList);
+        }
+        
+        userRs.close();
+        userStmt.close();
+        con.close();
+    } catch (Exception e) {
+        // Log error but don't break cart functionality
+        System.err.println("Error saving cart to database: " + e.getMessage());
+    }
+}
+
 // Redirect to showcart.jsp
 response.sendRedirect("showcart.jsp");
+%>
+
+<%!
+// Cart persistence method (copied locally to avoid include issues)
+public void saveCartToDatabase(Connection con, int customerId, HashMap<String, ArrayList<Object>> cart) throws SQLException {
+    if (cart == null || cart.isEmpty()) {
+        // Clear cart if empty
+        String clearSql = "DELETE FROM incart WHERE orderId = ?";
+        PreparedStatement clearStmt = con.prepareStatement(clearSql);
+        clearStmt.setInt(1, -customerId); // Negative orderId for cart
+        clearStmt.executeUpdate();
+        clearStmt.close();
+        return;
+    }
+    
+    // First, clear existing cart for this user
+    String clearSql = "DELETE FROM incart WHERE orderId = ?";
+    PreparedStatement clearStmt = con.prepareStatement(clearSql);
+    clearStmt.setInt(1, -customerId);
+    clearStmt.executeUpdate();
+    clearStmt.close();
+    
+    // Insert all cart items
+    String insertSql = "INSERT INTO incart (orderId, productId, quantity, price) VALUES (?, ?, ?, ?)";
+    PreparedStatement insertStmt = con.prepareStatement(insertSql);
+    
+    for (Map.Entry<String, ArrayList<Object>> entry : cart.entrySet()) {
+        String productId = entry.getKey();
+        ArrayList<Object> item = entry.getValue();
+        int quantity = (Integer) item.get(3);
+        double price = (Double) item.get(2);
+        
+        insertStmt.setInt(1, -customerId);
+        insertStmt.setInt(2, Integer.parseInt(productId));
+        insertStmt.setInt(3, quantity);
+        insertStmt.setDouble(4, price);
+        insertStmt.addBatch();
+    }
+    
+    insertStmt.executeBatch();
+    insertStmt.close();
+}
 %>

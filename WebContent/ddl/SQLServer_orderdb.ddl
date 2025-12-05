@@ -142,6 +142,17 @@ CREATE TABLE review (
     FOREIGN KEY (productId) REFERENCES product(productId)
         ON UPDATE CASCADE ON DELETE CASCADE
 );
+CREATE TABLE UserInteraction (
+    interactionId INT IDENTITY PRIMARY KEY,
+    customerId INT NOT NULL,
+    productId INT NOT NULL,
+    interactionType VARCHAR(20) NOT NULL, -- 'view', 'cart_add', 'purchase'
+    interactionDate DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (customerId) REFERENCES customer(customerId) ON DELETE CASCADE,
+    FOREIGN KEY (productId) REFERENCES product(productId) ON DELETE CASCADE
+);
+CREATE INDEX idx_user_interaction ON UserInteraction(customerId, interactionType, interactionDate);
+CREATE INDEX idx_product_interaction ON UserInteraction(productId, interactionType);
 
 INSERT INTO category(categoryName) VALUES ('Coffee Beans Whole');
 INSERT INTO category(categoryName) VALUES ('Coffee Beans Ground');
