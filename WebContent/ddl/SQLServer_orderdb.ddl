@@ -154,6 +154,101 @@ CREATE TABLE UserInteraction (
 CREATE INDEX idx_user_interaction ON UserInteraction(customerId, interactionType, interactionDate);
 CREATE INDEX idx_product_interaction ON UserInteraction(productId, interactionType);
 
+CREATE TABLE PaymentMethodDetail (
+    paymentId INT IDENTITY PRIMARY KEY,
+    customerId INT NOT NULL,
+    cardType VARCHAR(20) NOT NULL,
+    cardNumber VARCHAR(20) NOT NULL,
+    expiryDate VARCHAR(7) NOT NULL,
+    cvv VARCHAR(4) NOT NULL,
+    billingAddress VARCHAR(100),
+    FOREIGN KEY (customerId) REFERENCES customer(customerId) ON DELETE CASCADE
+);
+
+-- Shipping Address table
+CREATE TABLE ShippingAddress (
+    addressId INT IDENTITY PRIMARY KEY,
+    customerId INT NOT NULL,
+    fullName VARCHAR(100) NOT NULL,
+    addressLine1 VARCHAR(100) NOT NULL,
+    addressLine2 VARCHAR(100),
+    city VARCHAR(50) NOT NULL,
+    state VARCHAR(50) NOT NULL,
+    postalCode VARCHAR(20) NOT NULL,
+    country VARCHAR(50) NOT NULL,
+    phone VARCHAR(20),
+    isDefault BIT DEFAULT 1,
+    FOREIGN KEY (customerId) REFERENCES customer(customerId) ON DELETE CASCADE
+);
+
+-- Tax rates by state/province
+CREATE TABLE TaxRate (
+    stateCode VARCHAR(10) PRIMARY KEY,
+    stateName VARCHAR(50) NOT NULL,
+    taxRate DECIMAL(5,3) NOT NULL
+);
+
+-- Shipping rates
+CREATE TABLE ShippingRate (
+    rateId INT IDENTITY PRIMARY KEY,
+    minAmount DECIMAL(10,2) NOT NULL,
+    maxAmount DECIMAL(10,2),
+    rate DECIMAL(10,2) NOT NULL,
+    description VARCHAR(100)
+);
+
+-- Order Shipments (for multiple shipments)
+CREATE TABLE OrderShipment (
+    shipmentId INT IDENTITY PRIMARY KEY,
+    orderId INT NOT NULL,
+    shipmentDate DATETIME,
+    trackingNumber VARCHAR(100),
+    carrier VARCHAR(50),
+    shippingCost DECIMAL(10,2) NOT NULL,
+    taxAmount DECIMAL(10,2) NOT NULL,
+    addressId INT NOT NULL,
+    status VARCHAR(20) DEFAULT 'Pending',
+    FOREIGN KEY (orderId) REFERENCES ordersummary(orderId) ON DELETE CASCADE,
+    FOREIGN KEY (addressId) REFERENCES ShippingAddress(addressId)
+);
+
+-- Add shipping address columns to ordersummary if not already there
+IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS 
+               WHERE TABLE_NAME = 'ordersummary' AND COLUMN_NAME = 'shippingAddressId')
+BEGIN
+    ALTER TABLE ordersummary ADD shippingAddressId INT;
+    ALTER TABLE ordersummary ADD paymentMethodId INT;
+    ALTER TABLE ordersummary ADD taxAmount DECIMAL(10,2) DEFAULT 0;
+    ALTER TABLE ordersummary ADD shippingCost DECIMAL(10,2) DEFAULT 0;
+END
+
+-- Insert tax rates for US and Canada
+INSERT INTO TaxRate (stateCode, stateName, taxRate) VALUES
+('CA', 'California', 0.0725),
+('NY', 'New York', 0.04),
+('TX', 'Texas', 0.0625),
+('WA', 'Washington', 0.065),
+('FL', 'Florida', 0.06),
+('IL', 'Illinois', 0.0625),
+('PA', 'Pennsylvania', 0.06),
+('OH', 'Ohio', 0.0575),
+('GA', 'Georgia', 0.04),
+('MI', 'Michigan', 0.06),
+('ON', 'Ontario', 0.13),
+('BC', 'British Columbia', 0.12),
+('AB', 'Alberta', 0.05),
+('QC', 'Quebec', 0.14975),
+('MB', 'Manitoba', 0.07),
+('MB', 'Manitoba', 0.07); -- For Arnold in Winnipeg
+
+-- Insert shipping rates
+INSERT INTO ShippingRate (minAmount, maxAmount, rate, description) VALUES
+(0, 25, 5.99, 'Standard Shipping'),
+(25, 50, 8.99, 'Expedited Shipping'),
+(50, 100, 12.99, 'Express Shipping'),
+(100, NULL, 0.00, 'Free Shipping over $100');
+
+
 INSERT INTO category(categoryName) VALUES ('Coffee Beans Whole');
 INSERT INTO category(categoryName) VALUES ('Coffee Beans Ground');
 INSERT INTO category(categoryName) VALUES ('Coffee Makers');
