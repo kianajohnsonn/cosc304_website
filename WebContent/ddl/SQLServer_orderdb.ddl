@@ -222,6 +222,10 @@ BEGIN
     ALTER TABLE ordersummary ADD shippingCost DECIMAL(10,2) DEFAULT 0;
 END
 
+ALTER TABLE review
+ADD CONSTRAINT UQ_OneReviewPerCustomer UNIQUE (customerId, productId);
+
+
 -- Insert tax rates for US and Canada
 INSERT INTO TaxRate (stateCode, stateName, taxRate) VALUES
 ('CA', 'California', 0.0725),

@@ -61,11 +61,11 @@
 
   /* Title */
   .header-title {
-    margin: 0;
+    margin-top: 20px;
     color: #f9c0c4;                   
     display: inline-block;
     font-weight: 800;
-    font-size: 2.2rem;
+    font-size: 3.4rem;
     text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
     letter-spacing: 0.5px;
     position: relative;
@@ -112,16 +112,12 @@
 
   /* Welcome message */
   .welcome-msg {
-    background: linear-gradient(135deg, rgba(226, 241, 247, 0.2), rgba(226, 241, 247, 0.1));
-    padding: 8px 18px;
-    border-radius: 25px;
-    border: 1px solid rgba(226, 241, 247, 0.3);
-    margin: 0 15px;
     font-weight: 600;
-    font-size: 1.1rem;
+    font-size: 1.5rem;
     color: #e2f1f7;
     backdrop-filter: blur(5px);
     display: inline-block;
+    margin-bottom: 20px;
   }
 
   /* Cart badge */

@@ -94,7 +94,6 @@ NumberFormat currFormat = NumberFormat.getCurrencyInstance();
 %>
 
 <a href="manageproducts.jsp" class="admin-btn">Manage Products</a>
-<a href="manageshipments.jsp" class="admin-btn">Manage Shipments</a>
 
 
 <%

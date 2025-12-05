@@ -3,8 +3,12 @@
 <%@ page import="java.net.URLEncoder" %>
 <%@ page import="java.text.NumberFormat" %>
 <%@ page import="java.util.*" %>
+<%@ page import="java.sql.Timestamp" %>
+<%@ page import="java.text.SimpleDateFormat" %>
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ include file="jdbc.jsp" %>
+<%@ page import="java.time.*, java.time.temporal.ChronoUnit" %>
+
 
 <%!
 // Helper methods for recommendations - DECLARATIONS MUST BE AT TOP
@@ -154,7 +158,7 @@ line-height: 1.5;
 .product-box img {
 display: block;
 margin: 20px auto;
-max-width: 500px;
+max-width: 400px;
 border-radius: 8px;
 box-shadow: 0 1px 4px rgba(0,0,0,0.15);
 }
@@ -395,17 +399,68 @@ if (productId == null || productId.isEmpty()) {
             out.println("</div>");
             
             if (imageURL != null && !imageURL.isEmpty()) {
-                out.println("<img src='" + imageURL + "' alt='" + name + "' style='max-width:600px;'/>");
+                out.println("<img src='" + imageURL + "' alt='" + name + "' style='max-width:500px;'/>");
             } else {
                 out.println("<p>No image available.</p>");
             }
             
+            out.println("<div id='actionButtons' style='display:inline-block; vertical-align:top; margin-left:20px; margin-top:20px;'>");
             out.println("<p><a id='addToCartBtn' href='addcart.jsp?id=" + id + "&name=" + URLEncoder.encode(name, "UTF-8") + "&price=" + price + "&quantity=1' class='btn btn-primary'>Add to Cart</a></p>");
             out.println("<p><a href='listprod.jsp' class='btn btn-secondary'>Continue Shopping</a></p>");
+            out.println("<p><a href='submitreview.jsp?id=" + id + "' class='btn btn-secondary'>Write a Review</a></p>");
+            out.println("</div>");
+
+            // Adjust the product image so buttons sit to its right (works even though image was printed above)
+            %>
+            <script>
+            (function(){
+              var img = document.querySelector('.product-box img');
+              if(img){
+                img.style.cssText = 'float:left; margin-right:20px; margin-left:90px; display:inline-block; max-width:500px;';
+              }
+            })();
+            </script>
+            <%
+
+            // Other customer reviews
+            out.println("<h2>Reviews</h2>");
+
+
+            try {
+                String sqlreview = "SELECT customerid, reviewRating, reviewComment, reviewDate FROM Review WHERE productId = ? ORDER BY reviewDate DESC";
+                PreparedStatement psReview = con.prepareStatement(sqlreview);
+                psReview.setInt(1, id);
+                ResultSet reviewRs = psReview.executeQuery();
+
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+                boolean hasReviews = false;
+
+                while (reviewRs.next()) {
+                    hasReviews = true;
+
+                    Timestamp ts = reviewRs.getTimestamp("reviewDate");
+                    String dateOnly = (ts != null) ? sdf.format(ts) : "";
+
+                    out.println("<div class='review-box'>");
+                    out.println("<span>" + dateOnly + "</span>");
+                    out.println("<small> Rating: " + reviewRs.getInt("reviewRating") + "/5</small>");
+                    out.println("<p>" + reviewRs.getString("reviewComment") + "</p>");
+                    out.println("</div>");
+                    out.println("<hr>");
+                }
+
+                if (!hasReviews) {
+                    out.println("<p>No reviews yet. Be the first to review this product!</p>");
+                }
+                reviewRs.close();
+                psReview.close();
+            } catch (Exception e) {
+                out.println("<p>Error loading reviews: " + e.getMessage() + "</p>");
+            }
 
             // Display recommendations
             if (!recommendations.isEmpty()) {
-                out.println("<div class='recommendations-section'>");
+                out.println("<div style='margin-top:400px;' class='recommendations-section'>");
                 out.println("<h3 class='recommendations-title'>Recommended For You</h3>");
                 out.println("<div class='recommendations-grid'>");
                 

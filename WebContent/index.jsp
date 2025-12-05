@@ -7,7 +7,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Nadeen and Kiana Grocery Main Page</title>
+    <title>Nadeen and Kiana Main Page</title>
     <link href="css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
@@ -24,8 +24,9 @@
             margin: 0;
             background: #1f3d2b; 
             color: #FFE4E1;
-            font-size: 2.2rem;
+            font-size: 3.2rem;
             letter-spacing: 1px;
+            font-weight: bold;
         }
 
         h2 {

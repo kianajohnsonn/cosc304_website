@@ -347,11 +347,9 @@ try(Connection con = DriverManager.getConnection(url, uid, pwd)) {
     // Build query based on filters
     StringBuilder sqlOrder = new StringBuilder();
     sqlOrder.append("SELECT o.orderId, o.orderDate, c.customerId, c.firstName, c.lastName, ");
-    sqlOrder.append("o.totalAmount, o.taxAmount, o.shippingCost, ");
-    sqlOrder.append("sa.addressLine1, sa.city, sa.state, sa.postalCode, sa.country ");
+    sqlOrder.append("o.totalAmount, o.taxAmount, o.shippingCost ");
     sqlOrder.append("FROM ordersummary o ");
     sqlOrder.append("JOIN customer c ON o.customerId = c.customerId ");
-    sqlOrder.append("LEFT JOIN ShippingAddress sa ON o.shippingAddressId = sa.addressId ");
     sqlOrder.append("WHERE 1=1 ");
     
     if (startDate != null && !startDate.isEmpty()) {
@@ -409,17 +407,8 @@ try(Connection con = DriverManager.getConnection(url, uid, pwd)) {
             BigDecimal totalAmount = rs.getBigDecimal("totalAmount");
             BigDecimal taxAmount = rs.getBigDecimal("taxAmount");
             BigDecimal shippingCost = rs.getBigDecimal("shippingCost");
-            String address = rs.getString("addressLine1");
-            String city = rs.getString("city");
-            String state = rs.getString("state");
-            String postalCode = rs.getString("postalCode");
             
-            String shippingAddress = "";
-            if (address != null) {
-                shippingAddress = address + ", " + city + ", " + state + " " + postalCode;
-            } else {
-                shippingAddress = "No shipping address recorded";
-            }
+            String shippingAddress = "View in shipment details";
             
             out.println("<tr class='order-summary-row'>");
             out.println("<td><strong>#" + orderId + "</strong></td>");
